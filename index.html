@@ -1,49 +1,80 @@
 
-<iframe
-  id="portfolio"
-  title="Sujit Kumar Portfolio"
-  style="width:100%;height:100dvh;border:0;display:block"
-></iframe>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sujit Kumar | Portfolio</title>
 
-<script>
-(() => {
-  const BASE = "https://sujitkm.sujitkumar.workers.dev";
-  const WORKER_ORIGIN = new URL(BASE).origin;
-  const frame = document.getElementById("portfolio");
-
-  function currentPath() {
-    return location.pathname + location.search + location.hash;
-  }
-
-  function loadPortfolio() {
-    frame.src = BASE + currentPath();
-  }
-
-  loadPortfolio();
-
-  // Receive navigation updates from the Cloudflare website.
-  window.addEventListener("message", (event) => {
-    if (event.origin !== WORKER_ORIGIN) return;
-
-    const data = event.data;
-    if (!data || data.type !== "PORTFOLIO_NAV") return;
-    if (typeof data.path !== "string") return;
-    if (!data.path.startsWith("/") || data.path.startsWith("//")) return;
-
-    const target = new URL(data.path, location.origin);
-    if (target.origin !== location.origin) return;
-
-    const nextPath = target.pathname + target.search + target.hash;
-    if (nextPath === currentPath()) return;
-
-    if (data.mode === "replace") {
-      history.replaceState(null, "", nextPath);
-    } else {
-      history.pushState(null, "", nextPath);
+  <style>
+    * {
+      box-sizing: border-box;
     }
-  });
 
-  // Restore the corresponding embedded page on browser Back/Forward.
-  window.addEventListener("popstate", loadPortfolio);
-})();
-</script>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #portfolio {
+      display: block;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    id="portfolio"
+    src="https://sujitkm.sujitkumar.workers.dev/"
+    title="Sujit Kumar Portfolio"
+    allowfullscreen>
+  </iframe>
+
+  <script>
+    const PORTFOLIO_ORIGIN =
+      "https://sujitkm.sujitkumar.workers.dev";
+
+    window.addEventListener("message", (event) => {
+      if (event.origin !== PORTFOLIO_ORIGIN) return;
+
+      const data = event.data;
+
+      if (!data || data.type !== "PORTFOLIO_NAV") return;
+
+      const path = data.path;
+
+      if (
+        typeof path !== "string" ||
+        !path.startsWith("/") ||
+        path.startsWith("//")
+      ) return;
+
+      if (data.mode === "push") {
+        history.pushState(null, "", path);
+      } else {
+        history.replaceState(null, "", path);
+      }
+    });
+
+    window.addEventListener("popstate", () => {
+      const iframe = document.getElementById("portfolio");
+      iframe.contentWindow.postMessage(
+        {
+          type: "PARENT_NAV",
+          path: location.pathname +
+                location.search +
+                location.hash
+        },
+        PORTFOLIO_ORIGIN
+      );
+    });
+  </script>
+</body>
+</html>
