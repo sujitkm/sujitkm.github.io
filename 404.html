@@ -1,0 +1,48 @@
+<iframe
+  id="portfolio"
+  title="Sujit Kumar Portfolio"
+  style="width:100%;height:100dvh;border:0;display:block"
+></iframe>
+
+<script>
+(() => {
+  const BASE = "https://sujitkm.sujitkumar.workers.dev";
+  const WORKER_ORIGIN = new URL(BASE).origin;
+  const frame = document.getElementById("portfolio");
+
+  function currentPath() {
+    return location.pathname + location.search + location.hash;
+  }
+
+  function loadPortfolio() {
+    frame.src = BASE + currentPath();
+  }
+
+  loadPortfolio();
+
+  // Receive navigation updates from the Cloudflare website.
+  window.addEventListener("message", (event) => {
+    if (event.origin !== WORKER_ORIGIN) return;
+
+    const data = event.data;
+    if (!data || data.type !== "PORTFOLIO_NAV") return;
+    if (typeof data.path !== "string") return;
+    if (!data.path.startsWith("/") || data.path.startsWith("//")) return;
+
+    const target = new URL(data.path, location.origin);
+    if (target.origin !== location.origin) return;
+
+    const nextPath = target.pathname + target.search + target.hash;
+    if (nextPath === currentPath()) return;
+
+    if (data.mode === "replace") {
+      history.replaceState(null, "", nextPath);
+    } else {
+      history.pushState(null, "", nextPath);
+    }
+  });
+
+  // Restore the corresponding embedded page on browser Back/Forward.
+  window.addEventListener("popstate", loadPortfolio);
+})();
+</script>
