@@ -1,99 +1,49 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#2563eb">
+<iframe
+  id="portfolio"
+  title="Sujit Kumar Portfolio"
+  style="width:100%;height:100dvh;border:0;display:block"
+></iframe>
 
-  <title>Sujit Kumar | Portfolio</title>
-  <meta
-    name="description"
-    content="Sujit Kumar's portfolio in Statistics, Data Science, Bioinformatics, and Artificial Intelligence."
-  >
+<script>
+(() => {
+  const BASE = "https://sujitkm.sujitkumar.workers.dev";
+  const WORKER_ORIGIN = new URL(BASE).origin;
+  const frame = document.getElementById("portfolio");
 
-  <link rel="canonical" href="https://sujitkm.github.io/">
+  function currentPath() {
+    return location.pathname + location.search + location.hash;
+  }
 
-  <!-- Blue gradient SK favicon, embedded directly in HTML -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%2306b6d4'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='42' font-family='Arial,sans-serif' font-size='25' font-weight='700' text-anchor='middle' fill='%23ffffff'%3ESK%3C/text%3E%3C/svg%3E">
+  function loadPortfolio() {
+    frame.src = BASE + currentPath();
+  }
 
-  <style>
-    * {
-      box-sizing: border-box;
+  loadPortfolio();
+
+  // Receive navigation updates from the Cloudflare website.
+  window.addEventListener("message", (event) => {
+    if (event.origin !== WORKER_ORIGIN) return;
+
+    const data = event.data;
+    if (!data || data.type !== "PORTFOLIO_NAV") return;
+    if (typeof data.path !== "string") return;
+    if (!data.path.startsWith("/") || data.path.startsWith("//")) return;
+
+    const target = new URL(data.path, location.origin);
+    if (target.origin !== location.origin) return;
+
+    const nextPath = target.pathname + target.search + target.hash;
+    if (nextPath === currentPath()) return;
+
+    if (data.mode === "replace") {
+      history.replaceState(null, "", nextPath);
+    } else {
+      history.pushState(null, "", nextPath);
     }
+  });
 
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #ffffff;
-    }
-
-    iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
-      border: 0;
-      background: #ffffff;
-    }
-
-    noscript {
-      display: block;
-      padding: 24px;
-      font-family: Arial, sans-serif;
-      text-align: center;
-    }
-  </style>
-</head>
-
-<body>
-  <iframe
-    id="portfolio"
-    title="Sujit Kumar Portfolio"
-    allow="clipboard-read; clipboard-write"
-    referrerpolicy="strict-origin-when-cross-origin"
-    loading="eager"
-  ></iframe>
-
-  <noscript>
-    JavaScript is required to display this portfolio.
-    <a href="https://sujitkm.sujitkumar.workers.dev/">
-      Open portfolio directly
-    </a>
-  </noscript>
-
-  <script>
-    (() => {
-      const BASE_URL = "https://sujitkm.sujitkumar.workers.dev";
-      const frame = document.getElementById("portfolio");
-
-      function getPortfolioURL() {
-        const current = new URL(window.location.href);
-        const target = new URL(BASE_URL);
-
-        // Preserve the current path, query, and hash.
-        target.pathname =
-          current.pathname === "/"
-            ? "/"
-            : current.pathname;
-
-        target.search = current.search;
-        target.hash = current.hash;
-
-        return target.href;
-      }
-
-      frame.src = getPortfolioURL();
-
-      // Keep the embedded page aligned with browser navigation.
-      window.addEventListener("popstate", () => {
-        frame.src = getPortfolioURL();
-      });
-    })();
-  </script>
-</body>
-</html>
+  // Restore the corresponding embedded page on browser Back/Forward.
+  window.addEventListener("popstate", loadPortfolio);
+})();
+</script>
