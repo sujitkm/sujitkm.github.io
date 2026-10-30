@@ -11,8 +11,7 @@
       box-sizing: border-box;
     }
 
-    html,
-    body {
+    html, body {
       width: 100%;
       height: 100%;
       margin: 0;
@@ -29,10 +28,11 @@
     }
   </style>
 </head>
+
 <body>
+
   <iframe
     id="portfolio"
-    src="https://sujitkm.sujitkumar.workers.dev/"
     title="Sujit Kumar Portfolio"
     allowfullscreen>
   </iframe>
@@ -41,6 +41,26 @@
     const PORTFOLIO_ORIGIN =
       "https://sujitkm.sujitkumar.workers.dev";
 
+    const iframe = document.getElementById("portfolio");
+
+    // Load the exact URL requested by the visitor.
+    function loadPortfolio(path) {
+      if (
+        typeof path !== "string" ||
+        !path.startsWith("/") ||
+        path.startsWith("//")
+      ) return;
+
+      iframe.src = PORTFOLIO_ORIGIN + path;
+    }
+
+    // Initial page load: preserve pathname, query and hash.
+    const initialPath =
+      location.pathname + location.search + location.hash;
+
+    loadPortfolio(initialPath);
+
+    // Receive navigation updates from Cloudflare.
     window.addEventListener("message", (event) => {
       if (event.origin !== PORTFOLIO_ORIGIN) return;
 
@@ -63,18 +83,14 @@
       }
     });
 
+    // Browser back/forward navigation.
     window.addEventListener("popstate", () => {
-      const iframe = document.getElementById("portfolio");
-      iframe.contentWindow.postMessage(
-        {
-          type: "PARENT_NAV",
-          path: location.pathname +
-                location.search +
-                location.hash
-        },
-        PORTFOLIO_ORIGIN
-      );
+      const path =
+        location.pathname + location.search + location.hash;
+
+      loadPortfolio(path);
     });
   </script>
+
 </body>
 </html>
